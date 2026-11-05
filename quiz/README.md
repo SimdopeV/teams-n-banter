@@ -15,8 +15,9 @@ Plain HTML, CSS and JavaScript. No build step. Supabase does the database and re
 - [x] The 15 questions are in `questions.local.sql` (4 are True/False with two options)
 - [x] 11 teams: Rumuola, Rumuokoro, Mile 1, Mile 2, Slaughter, Eleme, Airforce, Agip, Waterlines, Rumukurushi, Artillery. To change them, edit `common.js`, `supabase.sql` (three places) and `loadtest/loadtest.mjs`, then run `supabase.sql` again
 - [x] Logo: `tnb-logo.png` (official logo, background made transparent)
-- [ ] New Supabase project, then fill `config.js`
-- [ ] Decide where it is hosted (GitHub Pages repo) and set `PLAYER_URL` in `config.js`
+- [x] Supabase project `teams-n-banter-quiz` (ymyjsxkjgajbefbvfpgl), schema and 15 questions loaded, `config.js` filled
+- [x] Hosted on GitHub Pages: https://simdopev.github.io/teams-n-banter/quiz/ (host: host.html)
+- [ ] Set the host PIN (README step 3)
 - [ ] Rehearse with 10 phones (section 7)
 
 ## What is new compared with Arc PH
