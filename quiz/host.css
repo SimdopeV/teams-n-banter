@@ -22,12 +22,6 @@ body.host {
 .host .logo-text { font-size: 3.4vh; }
 .host .pill { font-size: 1.6vh; padding: .7vh 1.3vh .5vh; border-width: .25vh; border-radius: 1.2vh; }
 .host .pill::after { bottom: -1vh; width: 1.4vh; height: 1.1vh; left: 1.6vh; }
-.host .event {
-  font-family: var(--font-display); font-size: 2vh; letter-spacing: .05em; text-transform: uppercase; color: var(--ink);
-  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 1.2vh; padding: .8vh 1.6vh .5vh;
-  box-shadow: .5vh .5vh 0 var(--ink);
-}
-.host .event span { color: var(--mustard); padding: 0 .5em; }
 .conn { display: flex; gap: 1vh; align-items: center; }
 .chip {
   display: inline-flex; align-items: center; gap: .8vh;
