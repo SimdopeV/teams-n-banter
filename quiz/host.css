@@ -79,6 +79,11 @@ body.host {
 /* Question */
 .q-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 3vw; }
 .q-meta { display: flex; align-items: center; gap: 1.4vh; flex-wrap: wrap; }
+/* Reveal: the timer ring is gone, so the question sits in the middle. */
+.revealed .q-top { justify-content: center; text-align: center; }
+.revealed .q-top > div { display: flex; flex-direction: column; align-items: center; }
+.revealed .q-meta { justify-content: center; }
+.revealed .q-text { max-width: 80vw; }
 .q-meta .num {
   font-family: var(--font-display); font-size: 2.6vh; letter-spacing: .04em; text-transform: uppercase;
   background: var(--ink); color: var(--mustard-2); border: .25vh solid var(--mustard); border-radius: 1.2vh; padding: .8vh 1.6vh .4vh;

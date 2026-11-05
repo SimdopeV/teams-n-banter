@@ -442,7 +442,7 @@
         (g.card_mode && g.status === 'reveal' ? cardButtons(g) : groupStrip(true));
     }
 
-    return '<section>' +
+    return '<section' + (revealed ? ' class="revealed"' : '') + '>' +
       '<div class="q-top"><div>' +
       '  <div class="q-meta"><span class="num">Question ' + (g.current_index + 1) + ' of ' + g.total_questions + '</span>' +
       (g.category ? '<span class="cat">' + esc(g.category) + '</span>' : '') + '</div>' +

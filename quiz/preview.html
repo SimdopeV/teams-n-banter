@@ -73,7 +73,7 @@
     }).join('');
     var foot = revealed ? '<p class="explain-big">' + Q.fact + '</p>' + strip()
       : '<div class="q-foot"><span>Answers in: <b>63 / 88</b></span><span class="muted"></span></div>';
-    return '<section><div class="q-top"><div><div class="q-meta"><span class="num">Question ' + Q.n + ' of ' + Q.total + '</span><span class="cat">' + Q.cat + '</span></div>' +
+    return '<section' + (revealed ? ' class="revealed"' : '') + '><div class="q-top"><div><div class="q-meta"><span class="num">Question ' + Q.n + ' of ' + Q.total + '</span><span class="cat">' + Q.cat + '</span></div>' +
       '<h1 class="q-text">' + Q.text + '</h1></div>' + (revealed ? '' : ring(4)) + '</div><div class="tiles">' + tiles + '</div>' + foot + '</section>';
   }
   function tfq() {
