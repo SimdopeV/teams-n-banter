@@ -178,6 +178,8 @@ button.gs[aria-pressed="true"] .g { color: var(--ink); }
 
 /* Leaderboard */
 .boards { display: grid; grid-template-columns: 1.1fr 1fr; gap: 4vw; flex: 1; min-height: 0; }
+/* Never let a long list run under the controls. */
+.boards > div { min-height: 0; overflow: hidden; padding: 0 .8vh .8vh 0; }
 .list { display: flex; flex-direction: column; gap: 1.4vh; }
 .lrow {
   display: grid; grid-template-columns: 6vh 1fr auto; align-items: center; gap: 2vh;
@@ -190,7 +192,15 @@ button.gs[aria-pressed="true"] .g { color: var(--ink); }
 .lrow .r { font-family: var(--font-display); font-size: 3.4vh; }
 .lrow .nm { font-size: 3vh; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lrow .nm small { font-size: 2vh; color: var(--muted); font-weight: 500; margin-left: 1.2vh; }
-.lrow .sc { font-family: var(--font-display); font-size: 3.4vh; }
+.lrow .sc { font-family: var(--font-display); font-size: 3.4vh; display: inline-flex; align-items: center; gap: 1.4vh; }
+/* Points gained on the last question, shown on the leaderboard: "+842" */
+.gain {
+  font-family: var(--font-display); font-size: .72em; line-height: 1; color: var(--ink);
+  background: var(--mint); border: .25vh solid var(--ink); border-radius: 999px; padding: .5vh 1.2vh .2vh;
+  animation: pop .5s cubic-bezier(.2, 1.6, .4, 1) .6s both;
+}
+.lrow.first .gain { border-color: var(--mint); }
+.lrow.up:not(.first) { background: #EEF8F2; }
 .lrow.first { background: var(--ink); color: var(--paper); border-color: var(--mustard); }
 .lrow.first .r, .lrow.first .sc { color: var(--mustard-2); }
 .lrow.first .nm small { color: rgba(255, 250, 235, .7); }

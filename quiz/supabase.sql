@@ -307,7 +307,8 @@ begin
   where id = p_game;
 end $$;
 
--- Full host view: game row, players, groups, answer count (in total and per team), distribution.
+-- Full host view: game row, players (with points gained on the current question), groups,
+-- answer count (in total and per team), distribution.
 create or replace function public._host_view(p_game uuid, p_note text default null)
 returns jsonb language plpgsql stable security definer set search_path = public as $$
 declare
@@ -343,9 +344,11 @@ begin
     'note', p_note,
     'players', coalesce((select jsonb_agg(jsonb_build_object(
         'id', t.player_id, 'name', t.name, 'label', t.label, 'group', t.group_name,
-        'total', t.total, 'correct', t.correct, 'answered', t.answered, 'rank', t.rank)
+        'total', t.total, 'correct', t.correct, 'answered', t.answered, 'rank', t.rank,
+        'gained', coalesce(cur.points, 0))
         order by t.total desc, t.correct desc, t.joined_at)
-      from public._player_totals(p_game) t), '[]'::jsonb),
+      from public._player_totals(p_game) t
+      left join public.answers cur on cur.player_id = t.player_id and cur.question_idx = g.current_index), '[]'::jsonb),
     'groups', (select jsonb_agg(jsonb_build_object(
         'name', s.group_name, 'members', s.members, 'avg', s.avg_total,
         'card_points', s.card_points, 'score', s.score, 'correct', s.correct, 'rank', s.rank))

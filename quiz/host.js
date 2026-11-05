@@ -585,21 +585,69 @@
       '</section>';
   }
 
-  function playerRows(list, compact) {
+  // Score cell. With a gain (leaderboard after a question) it shows "+842" and the total
+  // counts up from the old score to the new one (see countUp).
+  function scoreCell(total, gain, key) {
+    if (!gain || gain <= 0) return '<span class="sc">' + Q.num(total) + '</span>';
+    var from = Math.max(0, total - gain);
+    var shown = H.countedKey === key ? total : from;
+    return '<span class="sc"><span class="gain">+' + Q.num(gain) + '</span>' +
+      '<span class="cnt" data-from="' + from + '" data-to="' + total + '">' + Q.num(shown) + '</span></span>';
+  }
+
+  function playerRows(list, compact, key) {
     if (!list.length) return '<p class="kicker">No phone scores yet.</p>';
     return '<div class="list' + (compact ? ' compact' : '') + '">' + list.map(function (p, i) {
-      return '<div class="lrow' + (i === 0 ? ' first' : '') + '"><span class="r">' + p.rank + '</span>' +
+      var gain = key ? (p.gained || 0) : 0;
+      return '<div class="lrow' + (i === 0 ? ' first' : '') + (gain > 0 ? ' up' : '') + '"><span class="r">' + p.rank + '</span>' +
         '<span class="nm">' + esc(p.label) + '<small>' + esc(p.group) + '</small></span>' +
-        '<span class="sc">' + Q.num(p.total) + '</span></div>';
+        scoreCell(p.total, gain, key) + '</div>';
     }).join('') + '</div>';
   }
 
-  function groupRows(ranked, compact) {
+  // gains: team name -> points the team score went up by on this question.
+  function groupRows(ranked, compact, gains, key) {
     return '<div class="list' + (compact ? ' compact' : '') + '">' + ranked.map(function (r, i) {
-      return '<div class="lrow' + (i === 0 ? ' first' : '') + '"><span class="r">' + r.rank + '</span>' +
+      var gain = gains ? (gains[r.name] || 0) : 0;
+      return '<div class="lrow' + (i === 0 ? ' first' : '') + (gain > 0 ? ' up' : '') + '"><span class="r">' + r.rank + '</span>' +
         '<span class="nm">' + r.name + '<small>' + r.members + (r.members === 1 ? ' player' : ' players') + '</small></span>' +
-        '<span class="sc">' + Q.num(r.score) + '</span></div>';
+        scoreCell(r.score, gain, key) + '</div>';
     }).join('') + '</div>';
+  }
+
+  // What each team's score went up by on question idx: the average of its members'
+  // points on that question (team score is an average) plus 100 for a card award.
+  function teamGains(idx, ranked) {
+    var sum = {};
+    players().forEach(function (p) { sum[p.group] = (sum[p.group] || 0) + (p.gained || 0); });
+    var awards = (H.card ? H.card.awards : H.view && H.view.card_awards) || {};
+    var carded = awards[idx] || [];
+    var out = {};
+    ranked.forEach(function (r) {
+      out[r.name] = (r.members ? (sum[r.name] || 0) / r.members : 0) + (carded.indexOf(r.name) >= 0 ? 100 : 0);
+    });
+    return out;
+  }
+
+  // Count-up: once per leaderboard, totals run from the old score to the new one.
+  // Survives redraws (polls) by working from the start time, not the DOM.
+  var cu = { key: '', start: 0, raf: 0 };
+  function countUp(g) {
+    cancelAnimationFrame(cu.raf);
+    if (!g || g.status !== 'leaderboard' || H.hideScores) { cu.key = ''; return; }
+    var key = 'lb:' + g.current_index;
+    if (H.countedKey === key) return;
+    if (cu.key !== key) { cu.key = key; cu.start = Date.now() + 700; } // after the rows slide in
+    (function step() {
+      var t = Math.max(0, Math.min(1, (Date.now() - cu.start) / 1600));
+      var e = 1 - Math.pow(1 - t, 3);
+      Array.prototype.forEach.call(stage.querySelectorAll('.cnt'), function (el) {
+        var a = Number(el.getAttribute('data-from')), b = Number(el.getAttribute('data-to'));
+        el.textContent = Q.num(a + (b - a) * e);
+      });
+      if (t < 1) cu.raf = requestAnimationFrame(step);
+      else H.countedKey = key;
+    })();
   }
 
   function viewLeaderboard(g) {
@@ -611,12 +659,16 @@
         '</section>';
     }
     var s = standings();
+    var key = 'lb:' + g.current_index;
+    // Teams with nobody in them stay off the leaderboard (they come back once someone joins).
+    var teams = s.ranked.filter(function (r) { return r.members > 0 || r.cards > 0; });
+    if (!teams.length) teams = s.ranked;
     return '<section>' +
       '<p class="kicker">After question ' + (g.current_index + 1) + ' of ' + g.total_questions + '</p>' +
       '<h1 class="h-mid">Leaderboard</h1>' +
       '<div class="boards">' +
-      '  <div><p class="kicker" style="margin-bottom:1.4vh">Top players</p>' + playerRows(players().slice(0, 5), false) + '</div>' +
-      '  <div><p class="kicker" style="margin-bottom:1.4vh">Teams</p>' + groupRows(s.ranked, s.ranked.length > 6) + '</div>' +
+      '  <div><p class="kicker" style="margin-bottom:1.4vh">Top players</p>' + playerRows(players().slice(0, 5), false, key) + '</div>' +
+      '  <div><p class="kicker" style="margin-bottom:1.4vh">Teams</p>' + groupRows(teams, teams.length > 6, teamGains(g.current_index, teams), key) + '</div>' +
       '</div></section>';
   }
 
@@ -764,6 +816,7 @@
     else html = viewFinal();
     if (html !== H.lastHtml) { stage.innerHTML = html; H.lastHtml = html; }
     typewriter(g);
+    countUp(g);
     Q.tint(g && (g.status === 'question' || g.status === 'reveal') ? g.category : null);
     voice.players(players(), !!g && g.status === 'lobby');
     var key = g ? g.status + ':' + g.current_index : '';
