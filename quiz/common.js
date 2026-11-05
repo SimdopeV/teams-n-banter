@@ -64,6 +64,24 @@
     }); });
   })();
 
+  // Category colour for the sunrise rays (idea 5). Unknown categories keep the mustard rays.
+  // The alpha comes from --ray-a, which is softer on phones than on the projector.
+  var TINTS = {
+    'naija': '#7DBF3B', 'naija slang': '#7DBF3B',
+    'music': '#A98BE8', 'movies': '#A98BE8',
+    'true or false': '#43BF92', 'science': '#43BF92',
+    'geography': '#6FAEE6', 'food': '#F07E5E'
+  };
+  var lastTint = null;
+  Q.tint = function (category) {
+    var hex = TINTS[String(category || '').toLowerCase()] || '#F2B43A';
+    if (hex === lastTint || !document.body) return;
+    lastTint = hex;
+    var a = parseFloat(getComputedStyle(document.body).getPropertyValue('--ray-a')) || 0.36;
+    var n = parseInt(hex.slice(1), 16);
+    document.body.style.setProperty('--ray', 'rgba(' + (n >> 16) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ', ' + a + ')');
+  };
+
   Q.client = null;
   if (Q.configured && window.supabase) {
     Q.client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {

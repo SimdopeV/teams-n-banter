@@ -25,6 +25,7 @@
     autoRevealed: {},
     lastHtml: '',
     podiumShown: false,
+    hideScores: Q.local.get('tnbq_hide_scores') === 'on',
     qr: null
   };
 
@@ -337,6 +338,69 @@
     });
   }
 
+  // ---------------------------------------------------------------- voice
+  // Idea 2: in the lobby the laptop greets each new player out loud ("Welcome Ada, Rumuola!").
+  // Uses the browser's built-in voice, so it works offline. The Voice button mutes it.
+  var voice = (function () {
+    var ok = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+    var on = Q.local.get('tnbq_voice') !== 'off';
+    var seen = null;
+    function say(text) {
+      if (!on || !ok) return;
+      try {
+        if (window.speechSynthesis.pending) return; // do not build a long queue when many join at once
+        var u = new SpeechSynthesisUtterance(text);
+        u.rate = 1.05; u.pitch = 1.1;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+    return {
+      on: function () { return on && ok; },
+      toggle: function () {
+        on = !on; Q.local.set('tnbq_voice', on ? 'on' : 'off');
+        if (!on && ok) { try { window.speechSynthesis.cancel(); } catch (e) {} }
+      },
+      players: function (list, inLobby) {
+        var ids = {};
+        list.forEach(function (p) { ids[p.id] = true; });
+        var fresh = seen ? list.filter(function (p) { return !seen[p.id]; }) : [];
+        var first = seen === null;
+        seen = ids;
+        if (first || !inLobby || !H.unlocked || !fresh.length) return;
+        if (fresh.length > 3) {
+          say('Welcome ' + fresh[0].name + ', ' + fresh[1].name + ' and ' + (fresh.length - 2) + ' others!');
+        } else {
+          say(fresh.map(function (p) { return 'Welcome ' + p.name + ', ' + p.group + '!'; }).join(' '));
+        }
+      }
+    };
+  })();
+
+  // ---------------------------------------------------------------- typewriter
+  // Idea 4: a new question types itself out on the projector (about 35 letters a second).
+  // Picks up where it should be after a redraw, and shows the whole text straight away
+  // if the page is opened more than 3 seconds into a question.
+  var tw = { key: '', start: 0, raf: 0 };
+  function typewriter(g) {
+    cancelAnimationFrame(tw.raf);
+    if (!g || g.status !== 'question') { tw.key = ''; return; }
+    var key = g.current_index + ':' + (g.started_at || '');
+    if (tw.key !== key) {
+      tw.key = key;
+      var into = (g.duration_s || 20) - Q.remaining(g);
+      tw.start = into > 3 ? 0 : Date.now();
+    }
+    var full = g.question_text || '';
+    (function step() {
+      var el = stage.querySelector('.q-text');
+      if (!el) return;
+      var n = Math.min(full.length, Math.floor((Date.now() - tw.start) / 28));
+      var html = esc(full.slice(0, n)) + (n < full.length ? '<span class="tw-rest">' + esc(full.slice(n)) + '</span>' : '');
+      if (el.innerHTML !== html) el.innerHTML = html;
+      if (n < full.length) tw.raf = requestAnimationFrame(step);
+    })();
+  }
+
   // ---------------------------------------------------------------- views
   function esc(s) { return Q.esc(s); }
 
@@ -439,13 +503,16 @@
       foot = '<div class="q-foot">' + left + '<span class="muted" id="qStatus"></span></div>';
     } else {
       foot = (g.explanation ? '<p class="explain-big">' + esc(g.explanation) + '</p>' : '') +
-        (g.card_mode && g.status === 'reveal' ? cardButtons(g) : groupStrip(true));
+        (g.card_mode && g.status === 'reveal' ? cardButtons(g) : (H.hideScores ? '' : groupStrip(true)));
     }
 
     return '<section' + (revealed ? ' class="revealed"' : '') + '>' +
       '<div class="q-top"><div>' +
       '  <div class="q-meta"><span class="num">Question ' + (g.current_index + 1) + ' of ' + g.total_questions + '</span>' +
-      (g.category ? '<span class="cat">' + esc(g.category) + '</span>' : '') + '</div>' +
+      (g.category ? '<span class="cat">' + esc(g.category) + '</span>' : '') +
+      (dist && totalVotes && g.revealed_index != null
+        ? '<span class="got"><b>' + Math.round((dist[g.revealed_index] || 0) / totalVotes * 100) + '%</b> got it right</span>' : '') +
+      '</div>' +
       '  <h1 class="q-text">' + esc(g.question_text) + '</h1>' +
       '</div>' + (revealed ? '' : ring()) + '</div>' +
       '<div class="tiles">' + tiles + '</div>' + foot +
@@ -470,6 +537,13 @@
   }
 
   function viewLeaderboard(g) {
+    if (H.hideScores) {
+      return '<section class="hidden-scores">' +
+        '<p class="kicker">After question ' + (g.current_index + 1) + ' of ' + g.total_questions + '</p>' +
+        '<h1 class="h-big">Scores are <span class="grad-text">top secret</span></h1>' +
+        '<p class="lobby-total">The leaderboard comes out at the end. Keep the banter going.</p>' +
+        '</section>';
+    }
     var s = standings();
     return '<section>' +
       '<p class="kicker">After question ' + (g.current_index + 1) + ' of ' + g.total_questions + '</p>' +
@@ -623,6 +697,9 @@
     else if (g.status === 'leaderboard') html = viewLeaderboard(g);
     else html = viewFinal();
     if (html !== H.lastHtml) { stage.innerHTML = html; H.lastHtml = html; }
+    typewriter(g);
+    Q.tint(g && (g.status === 'question' || g.status === 'reveal') ? g.category : null);
+    voice.players(players(), !!g && g.status === 'lobby');
     var key = g ? g.status + ':' + g.current_index : '';
     if (H.unlocked && H.lastKey && key !== H.lastKey) {
       if (g.status === 'question') sfx.whoosh();
@@ -811,6 +888,8 @@
     else if (a === 'end') end();
     else if (a === 'reset') reset();
     else if (a === 'manage') { H.manage = !H.manage; render(); }
+    else if (a === 'voice') { voice.toggle(); labelSwitches(); }
+    else if (a === 'scores') { H.hideScores = !H.hideScores; Q.local.set('tnbq_hide_scores', H.hideScores ? 'on' : 'off'); labelSwitches(); render(); }
     else if (a === 'sound') { sfx.toggle(); b.setAttribute('aria-pressed', String(sfx.on())); b.textContent = sfx.on() ? 'Sound on' : 'Sound off'; }
     else if (a === 'fullscreen') {
       try {
@@ -848,6 +927,13 @@
 
   $('soundBtn').setAttribute('aria-pressed', String(sfx.on()));
   $('soundBtn').textContent = sfx.on() ? 'Sound on' : 'Sound off';
+  function labelSwitches() {
+    $('voiceBtn').setAttribute('aria-pressed', String(voice.on()));
+    $('voiceBtn').textContent = voice.on() ? 'Voice on' : 'Voice off';
+    $('scoresBtn').setAttribute('aria-pressed', String(H.hideScores));
+    $('scoresBtn').textContent = H.hideScores ? 'Scores hidden' : 'Scores shown';
+  }
+  labelSwitches();
   setInterval(tick, 100);
   render();
   if (H.pin) { $('pin').value = H.pin; tryUnlock(H.pin); } else { $('pin').focus(); }

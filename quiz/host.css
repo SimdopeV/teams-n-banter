@@ -7,6 +7,7 @@ body.host {
   /* The projector gets bolder rays and a sun that sits higher, peeking over the controls.
      It keeps moving even if the laptop asks for reduced motion: it is for the room. */
   --ray: rgba(240, 170, 40, .58);
+  --ray-a: .58;
   --sun-y: 99%;
   --turn: 150s;
   --rise-dist: 48vh;
@@ -79,6 +80,18 @@ body.host {
 /* Question */
 .q-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 3vw; }
 .q-meta { display: flex; align-items: center; gap: 1.4vh; flex-wrap: wrap; }
+/* Typewriter (idea 4): the untyped rest keeps its space so the box does not jump. */
+.tw-rest { color: transparent; }
+/* "63% got it right" (idea 3) */
+.got {
+  font-family: var(--font-display); font-size: 2.2vh; letter-spacing: .04em; text-transform: uppercase;
+  padding: .7vh 1.6vh .4vh; border-radius: 999px; background: var(--mint); border: .25vh solid var(--ink);
+  animation: pop .45s cubic-bezier(.2, 1.6, .4, 1) .3s both;
+}
+.got b { font-weight: 400; font-size: 2.8vh; }
+/* Scores hidden until the final (idea 6) */
+.hidden-scores { align-items: center; justify-content: center; text-align: center; }
+.hidden-scores .lobby-total { max-width: 60vw; }
 /* Reveal: the timer ring is gone, so the question sits in the middle. */
 .revealed .q-top { justify-content: center; text-align: center; }
 .revealed .q-top > div { display: flex; flex-direction: column; align-items: center; }

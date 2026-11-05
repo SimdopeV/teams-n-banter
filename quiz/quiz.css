@@ -29,6 +29,7 @@
   /* Sunrise background (see the end of the body rules). Phones: soft rays so text stays readable. */
   --sky: linear-gradient(180deg, #FFF8E4 0%, #FDEBC0 45%, #F9D98E 80%, #F6C766 100%);
   --ray: rgba(242, 176, 50, .36);
+  --ray-a: .36;               /* ray strength; Quiz.tint keeps it when it recolours the rays */
   --sun-y: 106%;
   --turn: 240s;
   --rise: 0;                 /* 0 = below the bottom edge, 1 = fully up */
@@ -53,6 +54,9 @@ body {
 button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 
+/* Registered so a category colour change fades instead of snapping. */
+@property --ray { syntax: '<color>'; inherits: true; initial-value: rgba(242, 176, 50, .36); }
+
 /* ---------- Sunrise background ----------
    Three layers behind everything: a dawn sky (body background), the poster's rays
    (body::before) that slowly turn, and the sun (body::after).
@@ -73,7 +77,7 @@ body::before {
           mask-image: radial-gradient(circle closest-side, transparent 0 4%, #000 14%);
   transform: translate(-50%, -50%);
   opacity: calc(.15 + .85 * var(--rise));
-  transition: opacity var(--rise-t) var(--rise-ease);
+  transition: opacity var(--rise-t) var(--rise-ease), --ray 1.6s ease;
   animation: rays-turn var(--turn) linear infinite;
 }
 body::after {
@@ -219,6 +223,16 @@ body::after {
 .answers.static .answer { cursor: default; min-height: 58px; }
 
 .status-line { font-size: 18px; font-weight: 700; text-align: center; margin: 0; }
+
+/* Points still up for grabs (idea 1): drops with the timer, same formula as the server. */
+.stake { margin: -6px 0 0; text-align: center; font-weight: 600; font-size: 15px; }
+.stake b {
+  font-family: var(--font-display); font-weight: 400; font-size: 24px; letter-spacing: .02em;
+  background: var(--ink); color: var(--mustard-2); border-radius: 10px; padding: 3px 10px 0; margin-right: 6px;
+}
+.stake.low b { background: var(--bad); color: var(--paper); }
+.stake.locked b { background: var(--mint); color: var(--ink); }
+.stake:empty { display: none; }
 
 /* Result */
 .result { text-align: center; padding: 26px 18px; }
