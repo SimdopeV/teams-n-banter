@@ -307,18 +307,24 @@ begin
   where id = p_game;
 end $$;
 
--- Full host view: game row, players, groups, answer count, distribution.
+-- Full host view: game row, players, groups, answer count (in total and per team), distribution.
 create or replace function public._host_view(p_game uuid, p_note text default null)
 returns jsonb language plpgsql stable security definer set search_path = public as $$
 declare
   g public.games;
   dist jsonb := null;
   n_in int := 0;
+  by_team jsonb := '{}'::jsonb;
 begin
   select * into g from public.games where id = p_game;
   if g.current_index >= 0 then
     select count(*) into n_in from public.answers
      where game_id = p_game and question_idx = g.current_index;
+    select coalesce(jsonb_object_agg(t.group_name, t.n), '{}'::jsonb) into by_team
+      from (select p.group_name, count(*)::int n
+              from public.answers a join public.players p on p.id = a.player_id
+             where a.game_id = p_game and a.question_idx = g.current_index
+             group by p.group_name) t;
     if g.status in ('reveal', 'leaderboard', 'final') then
       select jsonb_agg(coalesce(c.n, 0) order by s.i) into dist
         from generate_series(0, coalesce(jsonb_array_length(g.options), 4) - 1) s(i)
@@ -332,6 +338,7 @@ begin
     'game', public._public_game(g),
     'server_now', now(),
     'answers_in', n_in,
+    'team_answers', by_team,
     'distribution', dist,
     'note', p_note,
     'players', coalesce((select jsonb_agg(jsonb_build_object(

@@ -339,23 +339,57 @@
   }
 
   // ---------------------------------------------------------------- voice
-  // Idea 2: in the lobby the laptop greets each new player out loud ("Welcome Ada, Rumuola!").
-  // Uses the browser's built-in voice, so it works offline. The Voice button mutes it.
+  // A game-show narrator, like quiz.com's Voice mode: it welcomes players as they join,
+  // opens the quiz, reads each question out as it appears, calls the right answer on the
+  // reveal and announces the champions. quiz.com uses its own paid voice service; this uses
+  // the laptop's built-in voices (free, works offline) and picks the most natural English one.
+  // Browsers only allow speech after a click, which the PIN unlock provides.
+  // The Voice button mutes it.
   var voice = (function () {
     var ok = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
     var on = Q.local.get('tnbq_voice') !== 'off';
-    var seen = null;
-    function say(text) {
-      if (!on || !ok) return;
+    var seen = null, best = null;
+    function pick() {
+      if (!ok) return;
+      var list = window.speechSynthesis.getVoices() || [];
+      var score = function (v) {
+        if (!/^en/i.test(v.lang)) return -1;
+        return (/natural/i.test(v.name) ? 8 : 0) + (/online|neural/i.test(v.name) ? 4 : 0) +
+          (/google/i.test(v.name) ? 3 : 0) + (/en[-_](gb|ng)/i.test(v.lang) ? 2 : 0) + (v.localService ? 0 : 1);
+      };
+      best = list.filter(function (v) { return score(v) >= 0; })
+        .sort(function (a, b) { return score(b) - score(a); })[0] || null;
+    }
+    if (ok) {
+      pick();
+      try { window.speechSynthesis.addEventListener('voiceschanged', pick); } catch (e) {}
+    }
+    // interrupt: stop whatever is being said first (a new question beats an old welcome).
+    function say(text, interrupt) {
+      if (!on || !ok || !text) return;
       try {
-        if (window.speechSynthesis.pending) return; // do not build a long queue when many join at once
-        var u = new SpeechSynthesisUtterance(text);
-        u.rate = 1.05; u.pitch = 1.1;
-        window.speechSynthesis.speak(u);
+        var sp = window.speechSynthesis;
+        if (interrupt) sp.cancel();
+        else if (sp.pending) return; // no long queue when many join at once
+        var make = function (v) {
+          var u = new SpeechSynthesisUtterance(text);
+          if (v) { u.voice = v; u.lang = v.lang; }
+          u.rate = 1; u.pitch = 1.05;
+          return u;
+        };
+        var u = make(best);
+        // Online voices (Google, Microsoft Natural) fail without internet: retry with a built-in one.
+        u.onerror = function (e) {
+          if (!best || best.localService || e.error === 'interrupted' || e.error === 'canceled') return;
+          var local = (sp.getVoices() || []).filter(function (v) { return v.localService && /^en/i.test(v.lang); })[0];
+          sp.speak(make(local || null));
+        };
+        sp.speak(u);
       } catch (e) {}
     }
     return {
       on: function () { return on && ok; },
+      name: function () { return best ? best.name : ''; },
       toggle: function () {
         on = !on; Q.local.set('tnbq_voice', on ? 'on' : 'off');
         if (!on && ok) { try { window.speechSynthesis.cancel(); } catch (e) {} }
@@ -371,6 +405,23 @@
           say('Welcome ' + fresh[0].name + ', ' + fresh[1].name + ' and ' + (fresh.length - 2) + ' others!');
         } else {
           say(fresh.map(function (p) { return 'Welcome ' + p.name + ', ' + p.group + '!'; }).join(' '));
+        }
+      },
+      // Called once per change of screen (status or question).
+      step: function (g) {
+        if (!g) return;
+        var o = opts(g);
+        if (g.status === 'question') {
+          var intro = g.current_index === 0 ? 'Teams and Banter. Let\'s go! ' : '';
+          var last = g.current_index + 1 === g.total_questions ? 'Last question! ' : '';
+          say(intro + last + (g.question_text || ''), true);
+        } else if (g.status === 'reveal' && g.revealed_index != null && o[g.revealed_index] != null) {
+          say(String(o[g.revealed_index]) + '.', true);
+        } else if (g.status === 'final' && H.finalStep === 0) {
+          var w = standings().ranked.filter(function (r) { return r.rank === 1; }).map(function (r) { return r.name; });
+          if (w.length) say((w.length > 1 ? 'It\'s a tie! Your champions are ' : 'And your champions are... ') + w.join(' and ') + '!', true);
+        } else if (g.status === 'lobby' || g.status === 'leaderboard') {
+          try { window.speechSynthesis.cancel(); } catch (e) {}
         }
       }
     };
@@ -469,6 +520,20 @@
     }).join('') + '</div>';
   }
 
+  // Live answer counters per team while a question is open: "Agip 3/5".
+  // Only teams with players show. A team lights up once everyone in it has answered.
+  function teamCounters() {
+    var by = (H.view && H.view.team_answers) || {};
+    var size = {};
+    players().forEach(function (p) { size[p.group] = (size[p.group] || 0) + 1; });
+    var chips = Q.GROUPS.filter(function (name) { return size[name]; }).map(function (name) {
+      var n = Math.min(by[name] || 0, size[name]);
+      var cls = 'tc' + (n >= size[name] ? ' all' : n > 0 ? ' some' : '');
+      return '<div class="' + cls + '"><span class="g">' + name + '</span><b>' + n + '/' + size[name] + '</b></div>';
+    }).join('');
+    return chips ? '<div class="tcounts">' + chips + '</div>' : '';
+  }
+
   function cardButtons(g) {
     var picked = (H.card.awards[g.current_index] || []);
     return '<p class="card-hint">Click each team that held up <b>' + Q.LETTERS[g.revealed_index] + '</b>. 100 points each.</p>' +
@@ -500,7 +565,8 @@
       var left = g.card_mode
         ? '<span>Card round. Teams, get your A, B, C, D cards ready.</span>'
         : '<span>Answers in: <b>' + ((H.view && H.view.answers_in) || 0) + ' / ' + players().length + '</b></span>';
-      foot = '<div class="q-foot">' + left + '<span class="muted" id="qStatus"></span></div>';
+      foot = (g.card_mode ? '' : teamCounters()) +
+        '<div class="q-foot">' + left + '<span class="muted" id="qStatus"></span></div>';
     } else {
       foot = (g.explanation ? '<p class="explain-big">' + esc(g.explanation) + '</p>' : '') +
         (g.card_mode && g.status === 'reveal' ? cardButtons(g) : (H.hideScores ? '' : groupStrip(true)));
@@ -702,6 +768,7 @@
     voice.players(players(), !!g && g.status === 'lobby');
     var key = g ? g.status + ':' + g.current_index : '';
     if (H.unlocked && H.lastKey && key !== H.lastKey) {
+      voice.step(g);
       if (g.status === 'question') sfx.whoosh();
       else if (g.status === 'reveal') sfx.reveal();
       else if (g.status === 'final') sfx.fanfare();

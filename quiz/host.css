@@ -150,6 +150,19 @@ body.host {
 }
 .explain-big::before { content: "Banter fact"; font-family: var(--font-display); font-weight: 400; font-size: 2.2vh; text-transform: uppercase; background: var(--ink); color: var(--mustard-2); border-radius: .8vh; padding: .5vh 1vh .2vh; margin-right: 1.4vh; vertical-align: .3vh; }
 
+/* Live team answer counters during a question */
+.tcounts { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.1vh; }
+.tc {
+  display: inline-flex; align-items: center; gap: 1vh;
+  background: var(--paper); border: .25vh solid var(--ink); border-radius: 999px; padding: .6vh 1.8vh .5vh;
+  box-shadow: .3vh .3vh 0 var(--ink); transition: background .3s ease, transform .3s ease;
+}
+.tc .g { font-size: 2.5vh; font-weight: 700; }
+.tc b { font-family: var(--font-display); font-weight: 400; font-size: 3vh; }
+.tc.some { background: var(--mustard-2); }
+.tc.all { background: var(--mint); transform: translateY(-.3vh); }
+.tc.all b::after { content: " \2713"; font-family: var(--font-body); font-weight: 900; color: var(--good); }
+
 /* Team strip and card mode buttons */
 .gstrip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1vh; }
 .gs { background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 1.4vh; padding: .7vh 1.2vh .5vh; box-shadow: .4vh .4vh 0 var(--ink); min-width: 0; }
