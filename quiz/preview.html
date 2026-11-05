@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Teams &amp; Banter Theme Preview</title>
+<!-- Static mock-ups of every screen with fake data, to check the theme without Supabase.
+     preview.html?s=lobby | question | reveal | leaderboard | podium | join | wait | answer | good | bad | final -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Outfit:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="quiz.css">
+<link rel="stylesheet" href="host.css">
+<style>
+  .pv-nav { position: fixed; right: 8px; bottom: 8px; z-index: 99; display: flex; flex-wrap: wrap; gap: 4px; max-width: 520px; justify-content: flex-end; }
+  .pv-nav a { font: 600 12px Outfit, sans-serif; background: #141414; color: #F7CB6A; padding: 4px 8px; border-radius: 6px; text-decoration: none; }
+  .pv-nav a.on { background: #F2B43A; color: #141414; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="pv-nav" id="nav"></nav>
+<script src="common.js"></script>
+<script>
+(function () {
+  var TEAMS = ['Rumuola', 'Rumuokoro', 'Mile 1', 'Mile 2', 'Slaughter', 'Eleme', 'Airforce', 'Agip', 'Waterlines', 'Rumukurushi', 'Artillery'];
+  var L = ['A', 'B', 'C', 'D'];
+  var Q = { n: 4, total: 15, cat: 'Naija Pop', text: 'Which artist released the album "Made in Lagos" in 2020?',
+    opts: ['Wizkid', 'Burna Boy', 'Davido', 'Rema'], right: 0, fact: 'Made in Lagos went on to a deluxe edition in 2021.', dist: [41, 18, 22, 7] };
+  var s = (location.search.match(/s=([a-z-]+)/) || [])[1] || 'lobby';
+  var hostScreens = ['lobby', 'question', 'tf', 'reveal', 'leaderboard', 'podium'];
+  var phoneScreens = ['join', 'wait', 'answer', 'good', 'bad', 'final'];
+  document.getElementById('nav').innerHTML = hostScreens.concat(phoneScreens).map(function (k) {
+    return '<a href="?s=' + k + '"' + (k === s ? ' class="on"' : '') + '>' + k + '</a>';
+  }).join('');
+
+  var logo = '<img class="logo" src="tnb-logo.png" alt="Teams &amp; Banter">';
+  function top() {
+    return '<header class="top"><div class="brand">' + logo + '<span class="pill">The ultimate team trivia challenge</span></div>' +
+      '<div class="event">Sat 7 Nov <span>&#9733;</span> Teams &amp; Banter</div>' +
+      '<div class="conn"><span class="chip live"><i></i><span>Live</span></span></div></header>';
+  }
+  function controls(next) {
+    return '<footer class="controls"><button>Back</button><button>Pause</button><button class="go">' + next + '</button><button>End quiz</button><button>Reset game</button>' +
+      '<span class="sep"></span><button>Players</button><label class="switch"><input type="checkbox"><span>Card mode</span></label><button aria-pressed="true">Sound on</button><button>Full screen</button><span class="keys">Space next · Left back</span></footer>';
+  }
+  function fakeQr() {
+    var n = 29, d = '';
+    for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) {
+      var finder = (r < 7 && c < 7) || (r < 7 && c > n - 8) || (r > n - 8 && c < 7);
+      var on = finder ? (r % 6 === 0 || c % 6 === 0 || (r % 6 > 1 && r % 6 < 5 && c % 6 > 1 && c % 6 < 5) || (r > n - 8 && (r - (n - 7)) % 6 === 0) || (c > n - 8 && (c - (n - 7)) % 6 === 0)) : ((r * 7 + c * 13 + r * c) % 3 === 0);
+      if (on) d += 'M' + (c + 2) + ' ' + (r + 2) + 'h1v1h-1z';
+    }
+    return '<svg viewBox="0 0 33 33" shape-rendering="crispEdges"><rect width="33" height="33" fill="#fff"/><path d="' + d + '" fill="#000"/></svg>';
+  }
+  var scores = [8420, 7910, 7350, 6120, 5480, 5210, 4870, 4500, 4130, 3900, 3420];
+  function strip() {
+    return '<div class="gstrip">' + TEAMS.map(function (t, i) {
+      return '<div class="gs' + (i === 0 ? ' lead' : '') + '"><div class="g">' + t + '</div><div class="s">' + scores[i].toLocaleString() + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function ring(sec) {
+    var off = 276.46 * (1 - sec / 20);
+    return '<div class="ring' + (sec <= 5 ? ' low' : '') + '"><svg viewBox="0 0 100 100"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F2B43A"/><stop offset="1" stop-color="#FFF0A8"/></linearGradient></defs>' +
+      '<circle class="track" cx="50" cy="50" r="44" fill="none" stroke-width="8"/><circle class="prog" cx="50" cy="50" r="44" fill="none" stroke-width="8" stroke-dasharray="276.46" stroke-dashoffset="' + off + '"/></svg><div class="t">' + sec + '</div></div>';
+  }
+  function question(revealed) {
+    var tot = Q.dist.reduce(function (a, b) { return a + b; }, 0);
+    var tiles = Q.opts.map(function (t, i) {
+      var cls = 'htile tile t' + i + (revealed ? (i === Q.right ? ' right' : ' dim') : '');
+      var bar = revealed ? '<div class="dist"><span class="track"><span class="fill" style="width:' + Math.round(Q.dist[i] / tot * 100) + '%"></span></span><b>' + Q.dist[i] + '</b></div>' : '';
+      return '<div class="' + cls + '"><div class="row"><span class="badge">' + L[i] + '</span><span class="txt">' + t + '</span></div>' + bar + '</div>';
+    }).join('');
+    var foot = revealed ? '<p class="explain-big">' + Q.fact + '</p>' + strip()
+      : '<div class="q-foot"><span>Answers in: <b>63 / 88</b></span><span class="muted"></span></div>';
+    return '<section><div class="q-top"><div><div class="q-meta"><span class="num">Question ' + Q.n + ' of ' + Q.total + '</span><span class="cat">' + Q.cat + '</span></div>' +
+      '<h1 class="q-text">' + Q.text + '</h1></div>' + (revealed ? '' : ring(4)) + '</div><div class="tiles">' + tiles + '</div>' + foot + '</section>';
+  }
+  function tfq() {
+    var save = Q; Q = { n: 14, total: 15, cat: 'True or False', text: 'True or False: An octopus has three hearts.', opts: ['True', 'False'], right: 0, fact: '', dist: [50, 21] };
+    var h = question(false); Q = save; return h;
+  }
+  var players = [['Chidinma', 'Rumuola', 6840], ['Tobi (2)', 'Mile 1', 6510], ['Ebuka', 'Rumukurushi', 6390], ['Amara', 'Rumuola', 6020], ['Seyi', 'Artillery', 5870]];
+  function playerRows() {
+    return '<div class="list">' + players.map(function (p, i) {
+      return '<div class="lrow' + (i === 0 ? ' first' : '') + '"><span class="r">' + (i + 1) + '</span><span class="nm">' + p[0] + '<small>' + p[1] + '</small></span><span class="sc">' + p[2].toLocaleString() + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function teamRows() {
+    return '<div class="list compact">' + TEAMS.map(function (t, i) {
+      return '<div class="lrow' + (i === 0 ? ' first' : '') + '"><span class="r">' + (i + 1) + '</span><span class="nm">' + t + '<small>' + (9 - (i % 5)) + ' players</small></span><span class="sc">' + scores[i].toLocaleString() + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  var host = {
+    lobby: function () {
+      var names = ['Chidinma', 'Tobi', 'Ebuka', 'Amara', 'Seyi', 'Kene', 'Ada', 'Tobi (2)', 'Femi', 'Zainab', 'Uche', 'Bisola'];
+      return '<section class="lobby"><div class="qr-card">' + fakeQr() + '<div class="qr-url">simdopev.github.io/teams-n-banter/quiz</div></div>' +
+        '<div class="lobby-side"><p class="kicker">Live trivia · 15 questions · 20 seconds each</p>' +
+        '<h1 class="h-big">Scan to <span class="grad-text">join</span></h1>' +
+        '<p class="lobby-total">Type your name and tap your team. <b>72</b> players in.</p>' +
+        '<div class="lobby-groups">' + TEAMS.map(function (t, i) { return '<div class="lg"><div class="n">' + (9 - (i % 5)) + '</div><div class="g">' + t + '</div></div>'; }).join('') + '</div>' +
+        '<div class="names">' + names.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</div></div></section>';
+    },
+    question: function () { return question(false); },
+    tf: function () { return tfq(); },
+    reveal: function () { return question(true); },
+    leaderboard: function () {
+      return '<section><p class="kicker">After question 4 of 15</p><h1 class="h-mid">Leaderboard</h1><div class="boards">' +
+        '<div><p class="kicker" style="margin-bottom:1.4vh">Top players</p>' + playerRows() + '</div>' +
+        '<div><p class="kicker" style="margin-bottom:1.4vh">Teams</p>' + teamRows() + '</div></div></section>';
+    },
+    podium: function () {
+      function pod(i, place) { return '<div class="pod p' + place + '"><div class="nm">' + TEAMS[i] + '</div><div class="sc">' + scores[i].toLocaleString() + ' points</div><div class="block">' + place + '</div></div>'; }
+      return '<section><p class="kicker">Final results</p><h1 class="h-big">Champions: <span class="grad-text">Rumuola</span></h1>' +
+        '<div class="podium">' + pod(1, 2) + pod(0, 1) + pod(2, 3) + '</div>' +
+        '<div class="rest list compact">' + [3, 4, 5, 6, 7, 8, 9, 10].map(function (i) { return '<div class="lrow"><span class="r">' + (i + 1) + '</span><span class="nm">' + TEAMS[i] + '</span><span class="sc">' + scores[i].toLocaleString() + '</span></div>'; }).join('') + '</div></section>';
+    }
+  };
+  var nextLabel = { lobby: 'Start quiz', question: 'Reveal', tf: 'Reveal', reveal: 'Leaderboard', leaderboard: 'Next question', podium: 'Top players' };
+
+  function phoneWrap(inner, who) {
+    return '<main class="phone"><header><div class="brand">' + logo + '<span class="pill">Live trivia</span></div>' +
+      '<div class="who">' + (who ? 'Chidinma · Rumuola' : '') + '</div></header><div class="screen">' + inner + '</div></main>';
+  }
+  function reveal() {
+    return '<div><p class="label">Right answer</p><div class="reveal-answer tile t0"><span class="badge">A</span><span>' + Q.opts[0] + '</span></div></div><p class="explain">' + Q.fact + '</p>';
+  }
+  var phone = {
+    join: function () {
+      return '<h1>Join the <span class="grad-text">banter</span></h1><p class="lede">The ultimate team trivia challenge for friends. Fifteen questions. Fastest right answer scores most.</p>' +
+        '<form class="screen"><div class="field"><p class="label"><label for="name">Your name</label></p><input id="name" value="Chidinma"><div class="count">8 / 20</div></div>' +
+        '<div><p class="label">Your team</p><div class="groups">' + TEAMS.map(function (t, i) { return '<button type="button" class="group-btn" aria-pressed="' + (i === 0) + '">' + t + '</button>'; }).join('') + '</div></div>' +
+        '<p class="error"></p><button class="primary" type="button">Join</button></form>';
+    },
+    wait: function () {
+      return '<div class="card big-wait"><h1>You\'re in, <span class="name">Chidinma</span>.</h1><p class="lede" style="margin-top:10px">Rumuola. Eyes on the big screen.</p></div>' +
+        '<p class="lede">The first question pops up here. Keep this page open and your banter ready.</p>';
+    },
+    answer: function () {
+      return '<div class="qhead"><span class="qmeta">Question 4 of 15 · ' + Q.cat + '</span><span class="timer low">4</span></div>' +
+        '<div class="bar"><i style="transform:scaleX(.2)"></i></div><p class="qtext">' + Q.text + '</p>' +
+        '<div class="answers">' + Q.opts.map(function (t, i) { return '<button type="button" class="answer tile t' + i + '"><span class="badge">' + L[i] + '</span><span>' + t + '</span></button>'; }).join('') + '</div>';
+    },
+    good: function () {
+      return '<p class="qmeta">Question 4 of 15</p><div class="card result pop good"><p class="verdict">Correct!</p><p class="banter">Your team owes you a drink.</p><p class="points">+842 points</p><p class="total">Total 3,210</p></div>' + reveal();
+    },
+    bad: function () {
+      return '<p class="qmeta">Question 4 of 15</p><div class="card result pop bad"><p class="verdict">Not quite</p><p class="banter">The banter was strong. The answer was not.</p><p class="points">+0 points</p><p class="total">Total 2,368</p></div>' + reveal() +
+        '<p class="status-line">Leaderboard is on the big screen.</p>';
+    },
+    final: function () {
+      return '<h1>That\'s a <span class="grad-text">wrap</span></h1><div class="card"><p class="label">Your score</p><p class="final-num">6,840</p></div>' +
+        '<div class="card"><div class="final-row" style="border-top:0"><span>Your rank</span><b>1st of 72</b></div><div class="final-row"><span>Rumuola</span><b>1st of 11</b></div><div class="final-row"><span>Team score</span><b>8,420</b></div></div>' +
+        '<p class="lede">GG! Thanks for bringing the banter. See you at the next one.</p>';
+    }
+  };
+
+  // Question screens loop a fake 20 second timer so the rising sun can be watched.
+  if (s === 'question' || s === 'tf' || s === 'answer') {
+    var t0 = Date.now();
+    setInterval(function () {
+      var f = ((Date.now() - t0) % 20000) / 20000;
+      window.Quiz.sun.question(f);
+      var left = Math.ceil(20 - f * 20);
+      var rt = document.querySelector('.ring .t'), ring = document.querySelector('.ring'), pr = document.querySelector('.ring .prog');
+      if (rt) { rt.textContent = left; ring.className = 'ring' + (left <= 5 ? ' low' : ''); pr.setAttribute('stroke-dashoffset', String(276.46 * f)); }
+      var pt = document.querySelector('.timer');
+      if (pt) { pt.textContent = left; pt.className = 'timer' + (left <= 5 ? ' low' : ''); document.querySelector('.bar i').style.transform = 'scaleX(' + (1 - f) + ')'; }
+    }, 100);
+  } else {
+    window.Quiz.sun(1);
+  }
+
+  var app = document.getElementById('app');
+  if (host[s]) {
+    document.body.className = 'host';
+    app.outerHTML = top() + '<main class="stage">' + host[s]() + '</main>' + controls(nextLabel[s]);
+  } else {
+    app.innerHTML = phoneWrap((phone[s] || phone.join)(), s !== 'join');
+  }
+})();
+</script>
+</body>
+</html>

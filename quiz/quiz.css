@@ -1,0 +1,266 @@
+/* Teams & Banter theme. Shared tokens and the phone (player) layout. The host page adds host.css.
+   Look: the event poster. Mustard and cream rays, black speech bubbles with mustard text,
+   chunky outlined display type, hard black outlines with offset shadows. */
+:root {
+  --mustard: #F2B43A;
+  --mustard-2: #F7CB6A;
+  --cream: #FCEBC4;
+  --paper: #FFFAEB;
+  --ink: #141414;
+  --bg: var(--cream);
+  --bg-2: var(--paper);
+  --line: #141414;
+  --muted: rgba(20, 20, 20, .66);
+  --dark-ink: #141414;
+  --lavender: #B9A3EC;
+  --mint: #9FD9BF;
+  --plum: #3A2A4A;
+  --tile-a: #F2B43A; --tile-a-ink: #141414;
+  --tile-b: #141414; --tile-b-ink: #F7CB6A;
+  --tile-c: #B9A3EC; --tile-c-ink: #141414;
+  --tile-d: #9FD9BF; --tile-d-ink: #141414;
+  --good: #1E8F55;
+  --bad: #D0402F;
+  --bw: 3px;                      /* outline width */
+  --shadow: 5px 5px 0 var(--ink); /* hard offset shadow */
+  --font-display: "Luckiest Guy", "Arial Black", Impact, system-ui, sans-serif;
+  --font-body: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "Outfit", system-ui, sans-serif; /* numbers use tabular figures below */
+  /* Sunrise background (see the end of the body rules). Phones: soft rays so text stays readable. */
+  --sky: linear-gradient(180deg, #FFF8E4 0%, #FDEBC0 45%, #F9D98E 80%, #F6C766 100%);
+  --ray: rgba(242, 176, 50, .36);
+  --sun-y: 106%;
+  --turn: 240s;
+  --rise: 0;                 /* 0 = below the bottom edge, 1 = fully up */
+  --rise-dist: 40vh;         /* how far below its resting place the sun starts */
+  --rise-t: 7s;
+  --rise-ease: cubic-bezier(.2, .7, .3, 1);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background-color: var(--bg);
+  background-image: var(--sky);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  min-height: 100vh;
+}
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* ---------- Sunrise background ----------
+   Three layers behind everything: a dawn sky (body background), the poster's rays
+   (body::before) that slowly turn, and the sun (body::after).
+   --rise (0 to 1, set by Quiz.sun in common.js) is how far the sun is up:
+   it rises when a page opens, then during every question it drops below the
+   bottom edge and climbs back up as the 20 seconds run out, so it doubles as a timer.
+   The rays brighten as it climbs. Rays and sun share one centre, --sun-y down from the top.
+   Only transform and opacity change, so phones stay smooth. */
+body::before, body::after {
+  content: ""; position: fixed; left: 50%; top: var(--sun-y); z-index: -1;
+  pointer-events: none; will-change: transform, opacity;
+}
+body::before {
+  width: 320vmax; height: 320vmax;
+  background: repeating-conic-gradient(from 0deg,
+    var(--ray) 0deg 4.5deg, rgba(242, 180, 58, 0) 6.5deg 10.5deg, var(--ray) 12.5deg);
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 0 4%, #000 14%);
+          mask-image: radial-gradient(circle closest-side, transparent 0 4%, #000 14%);
+  transform: translate(-50%, -50%);
+  opacity: calc(.15 + .85 * var(--rise));
+  transition: opacity var(--rise-t) var(--rise-ease);
+  animation: rays-turn var(--turn) linear infinite;
+}
+body::after {
+  width: 150vmax; height: 150vmax;
+  background: radial-gradient(circle closest-side,
+    #FFFCEE 0%, #FFF3C2 9%, #FFE07A 14.5%, rgba(255, 214, 102, .62) 16%,
+    rgba(255, 205, 90, .32) 30%, rgba(255, 205, 90, .12) 48%, rgba(255, 205, 90, 0) 72%);
+  transform: translate(-50%, calc(-50% + (1 - var(--rise)) * var(--rise-dist))) scale(calc(.85 + .15 * var(--rise)));
+  transition: transform var(--rise-t) var(--rise-ease);
+  animation: sun-glow 4s ease-in-out infinite alternate;
+}
+@keyframes rays-turn { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes sun-glow { from { opacity: .86; } to { opacity: 1; } }
+
+/* Display type: cream fill, black outline, offset shadow, like "DAY TO GO" on the poster. */
+.display, .phone h1, .h-big, .h-mid, .result .verdict, .final-num {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: .01em; text-transform: uppercase;
+}
+
+/* Brand row */
+.brand { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand .logo { height: 58px; width: auto; display: block; }
+.logo-text {
+  font-family: var(--font-display); font-size: 22px; line-height: .9; text-transform: uppercase;
+  letter-spacing: .01em; color: var(--ink);
+}
+.logo-text i { font-style: normal; color: var(--mustard); -webkit-text-stroke: 1px var(--ink); paint-order: stroke fill; }
+/* Speech bubble: black box, mustard border and text, little tail. */
+.pill, .bubble {
+  position: relative; display: inline-block;
+  font-family: var(--font-display); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; line-height: 1.1;
+  background: var(--ink); color: var(--mustard-2);
+  border: 2px solid var(--mustard); border-radius: 10px; padding: 6px 10px 4px;
+  white-space: nowrap;
+}
+.pill::after, .bubble::after {
+  content: ""; position: absolute; left: 14px; bottom: -8px; width: 12px; height: 10px;
+  background: var(--ink); clip-path: polygon(0 0, 100% 0, 15% 100%);
+}
+.grad-text { color: var(--mustard); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; }
+.mono { font-family: var(--font-mono); }
+
+/* Answer tiles, shared with the host */
+.tile { --t: var(--tile-a); --ti: var(--tile-a-ink); background: var(--t); color: var(--ti); }
+.tile.t0 { --t: var(--tile-a); --ti: var(--tile-a-ink); }
+.tile.t1 { --t: var(--tile-b); --ti: var(--tile-b-ink); }
+.tile.t2 { --t: var(--tile-c); --ti: var(--tile-c-ink); }
+.tile.t3 { --t: var(--tile-d); --ti: var(--tile-d-ink); }
+.badge {
+  font-family: var(--font-display); font-weight: 400;
+  display: inline-grid; place-items: center; flex: none; padding-top: .12em;
+  border-radius: 10px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+}
+.tile.t1 .badge { background: var(--mustard); }
+.answer.t1, .reveal-answer.t1 { box-shadow: 4px 4px 0 var(--mustard); }
+
+/* ---------- Player page ---------- */
+.phone {
+  max-width: 520px; margin: 0 auto;
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) 28px max(16px, env(safe-area-inset-left, 0px));
+  min-height: 100vh; display: flex; flex-direction: column; gap: 18px;
+}
+.phone header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 40px; }
+.phone .brand { justify-content: space-between; width: 100%; }
+.phone .who {
+  flex-basis: 100%; font-weight: 600; font-size: 13px; color: var(--ink); overflow-wrap: anywhere;
+  margin-top: 6px;
+}
+.phone .who:empty { display: none; }
+.screen { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.phone h1 {
+  font-size: 38px; line-height: 1; margin: 6px 0 0; color: var(--paper);
+  -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; text-shadow: 4px 4px 0 var(--ink);
+}
+.phone h1 .grad-text, .phone h1 .name { color: var(--mustard); -webkit-text-stroke: 7px var(--ink); }
+.phone h2 { font-size: 22px; line-height: 1.2; margin: 0; }
+.lede { color: var(--ink); margin: 0; font-size: 16px; font-weight: 500; }
+.label {
+  font-family: var(--font-display); font-size: 14px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink); margin: 0 0 8px;
+}
+
+.field input {
+  width: 100%; min-height: 58px; font: inherit; font-size: 19px; font-weight: 600; color: var(--ink);
+  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 14px; padding: 0 16px;
+  box-shadow: var(--shadow);
+}
+.field input:focus { outline: 3px solid var(--mustard); outline-offset: 2px; }
+.count { font-size: 12px; font-weight: 600; color: var(--muted); text-align: right; margin-top: 8px; }
+
+.groups { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.group-btn {
+  min-height: 52px; border-radius: 14px; border: var(--bw) solid var(--ink); background: var(--paper);
+  font-size: 18px; font-weight: 700; cursor: pointer; box-shadow: 4px 4px 0 var(--ink);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.group-btn[aria-pressed="true"] { background: var(--ink); color: var(--mustard-2); transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--mustard); }
+
+.primary {
+  min-height: 66px; width: 100%; border: var(--bw) solid var(--ink); border-radius: 16px; cursor: pointer;
+  background: var(--mustard); color: var(--ink); box-shadow: var(--shadow);
+  font-family: var(--font-display); font-size: 26px; letter-spacing: .03em; text-transform: uppercase; padding-top: 4px;
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.primary:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
+.primary:disabled { opacity: .55; cursor: default; }
+.error { color: var(--bad); font-weight: 600; margin: 0; min-height: 1.4em; }
+
+.card {
+  background: var(--paper); border: var(--bw) solid var(--ink); border-radius: 18px; padding: 18px;
+  box-shadow: var(--shadow);
+}
+.big-wait { text-align: left; padding: 22px 18px; }
+.big-wait h1 { font-size: 32px; }
+.big-wait .name { color: var(--mustard); }
+
+/* Question on phone */
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.qmeta {
+  font-family: var(--font-display); font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink);
+}
+.timer {
+  font-family: var(--font-display); font-size: 30px; min-width: 2.6ch; text-align: center;
+  background: var(--ink); color: var(--mustard-2); border-radius: 12px; padding: 4px 10px 0; border: 2px solid var(--mustard);
+}
+.timer:empty { display: none; }
+.timer.low { background: var(--bad); color: var(--paper); border-color: var(--ink); animation: pulse .5s ease-in-out infinite alternate; }
+.bar { height: 14px; border-radius: 10px; background: var(--paper); border: var(--bw) solid var(--ink); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 100%; background: var(--mustard); transform-origin: left; transition: transform .25s linear; }
+.qtext { font-size: 22px; line-height: 1.25; font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.answers { display: flex; flex-direction: column; gap: 12px; }
+.answer {
+  display: flex; align-items: center; gap: 14px; text-align: left; width: 100%;
+  min-height: 70px; padding: 10px 14px; border: var(--bw) solid var(--ink); border-radius: 16px; cursor: pointer;
+  font-size: 18px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere;
+  box-shadow: 4px 4px 0 var(--ink); transition: transform .08s ease, box-shadow .08s ease, opacity .2s ease;
+}
+.answer .badge { width: 42px; height: 42px; font-size: 22px; }
+.answer:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+.answer:disabled { cursor: default; }
+.answers.locked .answer { opacity: .3; }
+.answers.locked .answer.picked { opacity: 1; transform: translate(2px, 2px); box-shadow: 0 0 0 4px var(--paper), 0 0 0 7px var(--ink); }
+.answers.static .answer { cursor: default; min-height: 58px; }
+
+.status-line { font-size: 18px; font-weight: 700; text-align: center; margin: 0; }
+
+/* Result */
+.result { text-align: center; padding: 26px 18px; }
+.result .verdict {
+  font-size: 50px; line-height: 1; margin: 0; color: var(--paper);
+  -webkit-text-stroke: 8px var(--ink); paint-order: stroke fill; text-shadow: 4px 4px 0 var(--ink);
+}
+.result.good { background: var(--mint); }
+.result.good .verdict { color: var(--paper); }
+.result.bad { background: #F6B9A9; }
+.result .banter { font-size: 16px; font-weight: 600; margin: 10px 0 0; }
+.result .points {
+  display: inline-block; font-family: var(--font-display); font-size: 26px; margin: 12px 0 0;
+  background: var(--ink); color: var(--mustard-2); border-radius: 12px; padding: 6px 14px 2px;
+}
+.result .total { color: var(--ink); font-weight: 600; margin: 10px 0 0; }
+.result.pop { animation: pop .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+.reveal-answer {
+  display: flex; gap: 12px; align-items: center; border-radius: 14px; padding: 12px 14px; font-weight: 700;
+  border: var(--bw) solid var(--ink); box-shadow: 4px 4px 0 var(--ink);
+}
+.reveal-answer .badge { width: 38px; height: 38px; font-size: 20px; }
+.explain { color: var(--ink); margin: 0; font-weight: 500; }
+
+.final-num { font-size: 58px; line-height: 1; margin: 6px 0 0; color: var(--mustard); -webkit-text-stroke: 7px var(--ink); paint-order: stroke fill; }
+.final-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 2px dashed var(--ink); font-weight: 600; }
+.final-row b { font-family: var(--font-display); font-weight: 400; font-size: 20px; }
+
+/* Reconnecting banner */
+.banner {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 10;
+  background: var(--ink); color: var(--mustard-2); text-align: center; font-weight: 700;
+  border-bottom: 3px solid var(--mustard);
+  padding: 10px 16px; font-size: 15px;
+  padding-top: max(10px, env(safe-area-inset-top, 0px));
+}
+
+@keyframes pop { from { transform: scale(.6) rotate(-3deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bar i, .answer, .group-btn, .primary { transition: none; }
+  .result.pop, .timer.low { animation: none; }
+  body:not(.host)::before, body:not(.host)::after { animation: none; transition: none; }
+}

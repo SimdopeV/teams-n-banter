@@ -1,0 +1,13 @@
+{
+  "name": "arc-ph-quiz-loadtest",
+  "private": true,
+  "type": "module",
+  "description": "Simulates 100 phones playing the Arc PH quiz against the real Supabase project.",
+  "scripts": {
+    "test": "node loadtest.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3",
+    "ws": "8.18.3"
+  }
+}

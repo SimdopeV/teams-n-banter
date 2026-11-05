@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FCEBC4">
+<title>Teams &amp; Banter Quiz Host</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Outfit:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="quiz.css">
+<link rel="stylesheet" href="host.css">
+</head>
+<body class="host">
+
+<header class="top">
+  <div class="brand">
+    <img class="logo" src="tnb-logo.png" alt="Teams &amp; Banter" onerror="this.outerHTML='<span class=logo-text>Teams <i>&amp;</i><br>Banter</span>'">
+    <span class="pill">The ultimate team trivia challenge</span>
+  </div>
+  <div class="event">Sat 7 Nov <span>&#9733;</span> Teams &amp; Banter</div>
+  <div class="conn">
+    <span class="chip card-chip" id="cardChip" hidden>Card mode</span>
+    <span class="chip" id="connChip"><i></i><span>Connecting</span></span>
+  </div>
+</header>
+
+<main class="stage" id="stage"></main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<footer class="controls" id="controls">
+  <button type="button" data-act="back">Back</button>
+  <button type="button" data-act="pause" id="pauseBtn">Pause</button>
+  <button type="button" data-act="next" class="go" id="nextBtn">Start quiz</button>
+  <button type="button" data-act="end" id="endBtn">End quiz</button>
+  <button type="button" data-act="reset" id="resetBtn">Reset game</button>
+  <span class="sep"></span>
+  <button type="button" data-act="manage" id="manageBtn" aria-pressed="false">Players</button>
+  <label class="switch"><input type="checkbox" id="cardToggle"><span>Card mode</span></label>
+  <button type="button" data-act="sound" id="soundBtn" aria-pressed="true">Sound on</button>
+  <button type="button" data-act="fullscreen">Full screen</button>
+  <span class="keys">Space next · Left back</span>
+</footer>
+
+<div class="gate" id="gate">
+  <form class="gate-card" id="gateForm" autocomplete="off">
+    <div class="brand">
+      <img class="logo" src="tnb-logo.png" alt="Teams &amp; Banter" onerror="this.outerHTML='<span class=logo-text>Teams <i>&amp;</i><br>Banter</span>'">
+      <span class="pill">Host</span>
+    </div>
+    <h1>Quiz host</h1>
+    <label class="label" for="pin">Host PIN</label>
+    <input id="pin" type="password" inputmode="text" autocomplete="off" required>
+    <p class="error" id="gateError" role="alert"></p>
+    <button class="primary" type="submit" id="gateBtn">Unlock</button>
+    <button class="ghost" type="button" id="offlineBtn" hidden>Start offline in card mode</button>
+  </form>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="common.js"></script>
+<script src="host.js"></script>
+</body>
+</html>

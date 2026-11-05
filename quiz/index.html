@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FCEBC4">
+<meta name="description" content="Teams & Banter live trivia. The ultimate team trivia challenge for friends.">
+<title>Teams &amp; Banter Live Trivia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Outfit:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+<div class="banner" id="banner" role="status" hidden>Reconnecting...</div>
+
+<main class="phone">
+  <header>
+    <div class="brand">
+      <img class="logo" src="tnb-logo.png" alt="Teams &amp; Banter" onerror="this.outerHTML='<span class=logo-text>Teams <i>&amp;</i><br>Banter</span>'">
+      <span class="pill">Live trivia</span>
+    </div>
+    <div class="who" id="who"></div>
+  </header>
+
+  <div class="screen" id="screen" aria-live="polite">
+    <p class="lede">Loading...</p>
+  </div>
+</main>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js"></script>
+<script src="common.js"></script>
+<script src="player.js"></script>
+</body>
+</html>
