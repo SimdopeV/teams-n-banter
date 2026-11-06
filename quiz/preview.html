@@ -60,7 +60,7 @@
     }).join('') + '</div>';
   }
   function ring(sec) {
-    var off = 276.46 * (1 - sec / 20);
+    var off = 276.46 * (1 - sec / 15);
     return '<div class="ring' + (sec <= 5 ? ' low' : '') + '"><svg viewBox="0 0 100 100"><defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F2B43A"/><stop offset="1" stop-color="#FFF0A8"/></linearGradient></defs>' +
       '<circle class="track" cx="50" cy="50" r="44" fill="none" stroke-width="8"/><circle class="prog" cx="50" cy="50" r="44" fill="none" stroke-width="8" stroke-dasharray="276.46" stroke-dashoffset="' + off + '"/></svg><div class="t">' + sec + '</div></div>';
   }
@@ -71,7 +71,7 @@
       var bar = revealed ? '<div class="dist"><span class="track"><span class="fill" style="width:' + Math.round(Q.dist[i] / tot * 100) + '%"></span></span><b>' + Q.dist[i] + '</b></div>' : '';
       return '<div class="' + cls + '"><div class="row"><span class="badge">' + L[i] + '</span><span class="txt">' + t + '</span></div>' + bar + '</div>';
     }).join('');
-    var foot = revealed ? '<p class="explain-big">' + Q.fact + '</p>' + strip()
+    var foot = revealed ? '<p class="explain-big">' + Q.fact + '</p>'
       : '<div class="q-foot"><span>Answers in: <b>63 / 88</b></span><span class="muted"></span></div>';
     return '<section' + (revealed ? ' class="revealed"' : '') + '><div class="q-top"><div><div class="q-meta"><span class="num">Question ' + Q.n + ' of ' + Q.total + '</span><span class="cat">' + Q.cat + '</span></div>' +
       '<h1 class="q-text">' + Q.text + '</h1></div>' + (revealed ? '' : ring(4)) + '</div><div class="tiles">' + tiles + '</div>' + foot + '</section>';
@@ -96,7 +96,7 @@
     lobby: function () {
       var names = ['Chidinma', 'Tobi', 'Ebuka', 'Amara', 'Seyi', 'Kene', 'Ada', 'Tobi (2)', 'Femi', 'Zainab', 'Uche', 'Bisola'];
       return '<section class="lobby"><div class="qr-card">' + fakeQr() + '<div class="qr-url">simdopev.github.io/teams-n-banter/quiz</div></div>' +
-        '<div class="lobby-side"><p class="kicker">Live trivia · 15 questions · 20 seconds each</p>' +
+        '<div class="lobby-side"><p class="kicker">Live trivia · 15 questions · 15 seconds each</p>' +
         '<h1 class="h-big">Scan to <span class="grad-text">join</span></h1>' +
         '<p class="lobby-total">Type your name and tap your team. <b>72</b> players in.</p>' +
         '<div class="lobby-groups">' + TEAMS.map(function (t, i) { return '<div class="lg"><div class="n">' + (9 - (i % 5)) + '</div><div class="g">' + t + '</div></div>'; }).join('') + '</div>' +
@@ -156,13 +156,13 @@
     }
   };
 
-  // Question screens loop a fake 20 second timer so the rising sun can be watched.
+  // Question screens loop a fake 15 second timer so the rising sun can be watched.
   if (s === 'question' || s === 'tf' || s === 'answer') {
     var t0 = Date.now();
     setInterval(function () {
-      var f = ((Date.now() - t0) % 20000) / 20000;
+      var f = ((Date.now() - t0) % 15000) / 15000;
       window.Quiz.sun.question(f);
-      var left = Math.ceil(20 - f * 20);
+      var left = Math.ceil(15 - f * 15);
       var rt = document.querySelector('.ring .t'), ring = document.querySelector('.ring'), pr = document.querySelector('.ring .prog');
       if (rt) { rt.textContent = left; ring.className = 'ring' + (left <= 5 ? ' low' : ''); pr.setAttribute('stroke-dashoffset', String(276.46 * f)); }
       var pt = document.querySelector('.timer');

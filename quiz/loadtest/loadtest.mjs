@@ -113,7 +113,7 @@ class Phone {
   scheduleAnswer(row) {
     const q = questions[row.current_index];
     const startedAt = ts(row.started_at);
-    const at = startedAt + 300 + Math.random() * 18700; // inside the 20 seconds
+    const at = startedAt + 300 + Math.random() * 13700; // inside the 15 seconds
     const n = (q.options && q.options.length) || 4;
     const choice = Math.random() < 0.6 ? q.correct_index : (q.correct_index + 1 + Math.floor(Math.random() * (n - 1))) % n;
     setTimeout(() => this.answer(row.current_index, choice, startedAt), Math.max(0, at - (Date.now() + offset)));
@@ -141,7 +141,7 @@ class Phone {
     if (d.result.is_correct !== correct) R.scoreMismatch.push(`${this.name} q${idx}: is_correct ${d.result.is_correct}`);
     if (!correct && d.result.points !== 0) R.scoreMismatch.push(`${this.name} q${idx}: wrong answer scored ${d.result.points}`);
     if (correct) {
-      const est = 500 + Math.round(500 * (1 - Math.min(20, Math.max(0, (a.sentAt - a.startedAt) / 1000)) / 20));
+      const est = 500 + Math.round(500 * (1 - Math.min(15, Math.max(0, (a.sentAt - a.startedAt) / 1000)) / 15));
       if (d.result.points < 500 || d.result.points > 1000 || Math.abs(d.result.points - est) > 40)
         R.scoreMismatch.push(`${this.name} q${idx}: ${d.result.points} points, expected about ${est}`);
     }

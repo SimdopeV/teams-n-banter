@@ -141,7 +141,7 @@
     if (!game || !game.started_at) return 0;
     var start = Q.ts(game.started_at);
     var end = game.paused_at ? Q.ts(game.paused_at) : (nowMs == null ? Q.now() : nowMs);
-    return (game.duration_s || 20) - (end - start) / 1000;
+    return (game.duration_s || 15) - (end - start) / 1000;
   };
 
   Q.esc = function (s) {

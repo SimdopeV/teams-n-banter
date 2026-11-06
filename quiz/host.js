@@ -48,7 +48,7 @@
       var shown = c.status === 'reveal' || c.status === 'leaderboard' || c.status === 'final';
       return {
         status: c.status, current_index: c.index, total_questions: H.questions ? H.questions.length : 15,
-        duration_s: 20, category: q ? q.category : null, question_text: q ? q.text : null,
+        duration_s: (H.view && H.view.game && H.view.game.duration_s) || 15, category: q ? q.category : null, question_text: q ? q.text : null,
         options: q ? q.options : null, started_at: c.started_at, paused_at: c.paused_at,
         revealed_index: shown && q ? q.correct_index : null, explanation: shown && q ? q.explanation : null,
         card_mode: true
@@ -438,7 +438,7 @@
     var key = g.current_index + ':' + (g.started_at || '');
     if (tw.key !== key) {
       tw.key = key;
-      var into = (g.duration_s || 20) - Q.remaining(g);
+      var into = (g.duration_s || 15) - Q.remaining(g);
       tw.start = into > 3 ? 0 : Date.now();
     }
     var full = g.question_text || '';
@@ -496,7 +496,7 @@
     return '<section class="lobby">' +
       '<div class="qr-card">' + qrSvg() + '<div class="qr-url">' + esc(shortUrl) + '</div></div>' +
       '<div class="lobby-side">' +
-      '  <p class="kicker">Live trivia · ' + (H.questions ? H.questions.length : 15) + ' questions · 20 seconds each</p>' +
+      '  <p class="kicker">Live trivia · ' + (H.questions ? H.questions.length : 15) + ' questions · ' + ((H.view && H.view.game && H.view.game.duration_s) || 15) + ' seconds each</p>' +
       '  <h1 class="h-big">Scan to <span class="grad-text">join</span></h1>' +
       '  <p class="lobby-total">Type your name and tap your team. <b>' + ps.length + '</b> ' + (ps.length === 1 ? 'player' : 'players') + ' in.</p>' +
       '  <div class="lobby-groups">' + groups + '</div>' + names +
@@ -509,15 +509,6 @@
       '<circle class="track" cx="50" cy="50" r="44" fill="none" stroke-width="8"/>' +
       '<circle class="prog" id="ringProg" cx="50" cy="50" r="44" fill="none" stroke-width="8" stroke-dasharray="276.46" stroke-dashoffset="0"/>' +
       '</svg><div class="t" id="ringT"></div></div>';
-  }
-
-  function groupStrip(lead) {
-    var s = standings();
-    var top = s.ranked[0];
-    return '<div class="gstrip">' + s.rows.map(function (r) {
-      var isLead = lead && top && r.rank === 1 && r.score > 0;
-      return '<div class="gs' + (isLead ? ' lead' : '') + '"><div class="g">' + r.name + '</div><div class="s">' + Q.num(r.score) + '</div></div>';
-    }).join('') + '</div>';
   }
 
   // Live answer counters per team while a question is open: "Agip 3/5".
@@ -569,7 +560,7 @@
         '<div class="q-foot">' + left + '<span class="muted" id="qStatus"></span></div>';
     } else {
       foot = (g.explanation ? '<p class="explain-big">' + esc(g.explanation) + '</p>' : '') +
-        (g.card_mode && g.status === 'reveal' ? cardButtons(g) : (H.hideScores ? '' : groupStrip(true)));
+        (g.card_mode && g.status === 'reveal' ? cardButtons(g) : ''); // no scores on the reveal: they come on the leaderboard
     }
 
     return '<section' + (revealed ? ' class="revealed"' : '') + '>' +
@@ -871,7 +862,7 @@
     var g = game();
     if (!g || g.status !== 'question') { Q.sun(1); return; }
     var left = Q.remaining(g);
-    Q.sun.question(1 - left / (g.duration_s || 20));
+    Q.sun.question(1 - left / (g.duration_s || 15));
     var t = $('ringT'), prog = $('ringProg'), st = $('qStatus');
     var shown = Math.max(0, Math.ceil(left));
     if (t) {
@@ -884,7 +875,7 @@
       else if (shown === 0 && H.lastShown === 1) sfx.buzz();
       H.lastShown = shown;
     }
-    if (prog) prog.setAttribute('stroke-dashoffset', String(276.46 * (1 - Math.max(0, Math.min(1, left / (g.duration_s || 20))))));
+    if (prog) prog.setAttribute('stroke-dashoffset', String(276.46 * (1 - Math.max(0, Math.min(1, left / (g.duration_s || 15))))));
     if (st) {
       var all = !g.card_mode && players().length > 0 && H.view && H.view.answers_in >= players().length;
       st.textContent = g.paused_at ? 'Timer paused' : left <= 0 ? (g.card_mode ? 'Time\'s up. Cards up!' : 'Time\'s up')

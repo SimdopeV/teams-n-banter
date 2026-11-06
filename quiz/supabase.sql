@@ -39,7 +39,7 @@ create table public.games (
                   check (status in ('lobby', 'question', 'reveal', 'leaderboard', 'final')),
   current_index   int  not null default -1,
   total_questions int  not null default 0,
-  duration_s      int  not null default 20,
+  duration_s      int  not null default 15,
   category        text,
   question_text   text,
   options         jsonb,

@@ -1,6 +1,6 @@
 # Teams & Banter Live Quiz
 
-Live team trivia for Teams & Banter (Saturday 7 November 2026, 4 PM). 15 questions, 20 seconds each, phones answer and the projector runs the show.
+Live team trivia for Teams & Banter (Saturday 7 November 2026, 4 PM). 15 questions, 15 seconds each, phones answer and the projector runs the show.
 
 Built on the Arc PH quiz engine (`../arc-ph/quiz`), with a new theme copied from @teamsnbanter: mustard and cream rays, black speech bubbles, chunky outlined type (Luckiest Guy + Outfit).
 
@@ -26,7 +26,7 @@ Plain HTML, CSS and JavaScript. No build step. Supabase does the database and re
 - "Teams" instead of "groups" in everything players and the room see
 - A line of banter under each phone result (`BANTER` in `player.js`)
 - Game-show sounds on the host laptop: countdown ticks for the last 5 seconds, a buzzer at time up, a sting on reveal and a fanfare on the podium. Made with Web Audio, so no files and they work offline. **Sound on/off** button in the controls bar.
-- Moving sunrise background: the sun rises when a page opens, and at every question it dips below the edge and climbs back up over the 20 seconds, like a second timer. The rays brighten as it rises and slowly turn. Phones keep it softer and stop it if the phone asks for reduced motion. Tune it with `--ray`, `--sun-y` and `--turn` in `quiz.css` (phones) and `host.css` (projector)
+- Moving sunrise background: the sun rises when a page opens, and at every question it dips below the edge and climbs back up over the 15 seconds, like a second timer. The rays brighten as it rises and slowly turn. Phones keep it softer and stop it if the phone asks for reduced motion. Tune it with `--ray`, `--sun-y` and `--turn` in `quiz.css` (phones) and `host.css` (projector)
 - Questions can have 2 options (True/False shows two big tiles) as well as 4
 - Timer ring pulses for the last 5 seconds, the correct tile gets a tick, the podium blocks rise
 
@@ -101,7 +101,7 @@ Commit and push to `main`. GitHub Pages serves the pages a minute later.
 
 Buttons at the bottom of the screen (they brighten when the mouse is over them): Back, Pause, the next step, End quiz, Reset game, Players, Card mode, Sound, Full screen. Plug the laptop into the room speakers for the sounds. End quiz and Reset game need two clicks.
 
-How a question runs: 20 seconds on the ring timer, "Answers in: 63 / 88" below it. It reveals by itself one second after time runs out, or when you press Space. Back during an open question cancels it (and deletes its answers, after a second press). A reveal cannot be undone.
+How a question runs: 15 seconds on the ring timer, "Answers in: 63 / 88" below it. It reveals by itself one second after time runs out, or when you press Space. Back during an open question cancels it (and deletes its answers, after a second press). A reveal cannot be undone.
 
 If the host page reloads, it picks up where the game is in the database.
 
@@ -149,9 +149,9 @@ Press **Reset game** twice. This deletes all players, answers and card points an
 
 ## Scoring
 
-- Correct: `500 + round(500 * (1 - seconds / 20))`, so 1000 for an instant answer and at least 500. Wrong or no answer: 0.
+- Correct: `500 + round(500 * (1 - seconds / 15))`, so 1000 for an instant answer and at least 500. Wrong or no answer: 0.
 - Time is measured with the database clock, not the phone's.
-- One answer per player per question. Answers after 21 seconds (20 plus 1 second grace) or after the reveal are rejected.
+- One answer per player per question. Answers after 16 seconds (15 plus 1 second grace) or after the reveal are rejected.
 - Team score = average of the members' totals (players who never answered count as 0) + 100 per card-mode award. Ties go to the team with more correct answers.
 
 ## How the answers stay secret
@@ -175,7 +175,7 @@ SUPABASE_URL=https://xxxx.supabase.co SUPABASE_ANON_KEY=your-anon-key HOST_PIN=y
 
 On Windows PowerShell set the variables first with `$env:SUPABASE_URL="..."` and so on.
 
-It joins 100 simulated players, each with its own realtime connection, runs all the questions with answers at random times inside the 20 seconds, and reports joins, realtime subscriptions, accepted and rejected answers, realtime events received and dropped, event latency, answer leaks and score mismatches. It takes about 7 minutes. Add `--fast` to reveal as soon as everyone has answered.
+It joins 100 simulated players, each with its own realtime connection, runs all the questions with answers at random times inside the 15 seconds, and reports joins, realtime subscriptions, accepted and rejected answers, realtime events received and dropped, event latency, answer leaks and score mismatches. It takes about 7 minutes. Add `--fast` to reveal as soon as everyone has answered.
 
 ## Free plan limits
 

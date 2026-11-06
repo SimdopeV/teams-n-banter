@@ -381,7 +381,7 @@
     var t = document.getElementById('timer');
     Q.tint(g && (g.status === 'question' || g.status === 'reveal') ? g.category : null);
     if (!g || g.status !== 'question') Q.sun(1);
-    else Q.sun.question(1 - Q.remaining(g) / (g.duration_s || 20));
+    else Q.sun.question(1 - Q.remaining(g) / (g.duration_s || 15));
     if (!t || !g || g.status !== 'question') return;
     var left = Q.remaining(g);
     var shown = Math.max(0, Math.ceil(left));
@@ -395,7 +395,7 @@
       if (g.card_mode) sHtml = '';
       else if (mine) { sHtml = '<b>Locked in</b> fingers crossed'; sCls += ' locked'; }
       else if (left > 0) {
-        var pts = 500 + Math.round(500 * Math.min(1, left / (g.duration_s || 20)));
+        var pts = 500 + Math.round(500 * Math.min(1, left / (g.duration_s || 15)));
         sHtml = '<b>+' + pts + '</b> up for grabs';
         if (shown <= 5) sCls += ' low';
       }
@@ -403,7 +403,7 @@
       stake.className = sCls;
     }
     var bar = document.getElementById('bar');
-    if (bar) bar.style.transform = 'scaleX(' + Math.max(0, Math.min(1, left / (g.duration_s || 20))) + ')';
+    if (bar) bar.style.transform = 'scaleX(' + Math.max(0, Math.min(1, left / (g.duration_s || 15))) + ')';
     if (keyFor() !== screenKey) render();
   }
 
